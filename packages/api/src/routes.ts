@@ -132,13 +132,40 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
     }).toString();
 
     if (params.images) {
-      url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
-      queryParams = new URLSearchParams({
-        access_token: params.page.access_token,
-        url: params.images[0], // For simplicity, posting only the first image
-        caption: params.message,
-        published: "true",
-      }).toString();
+      if (params.images.length === 1) {
+        url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
+        queryParams = new URLSearchParams({
+          access_token: params.page.access_token,
+          url: params.images[0],
+          caption: params.message,
+          published: "true",
+        }).toString();
+      } else {
+        const ids = [];
+        for (const imageUrl of params.images) {
+          const photoUrl = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
+          const photoQueryParams = new URLSearchParams({
+            access_token: params.page.access_token,
+            url: imageUrl,
+            published: "false",
+            temporary: "true",
+          }).toString();
+          const response = await fetch(`${photoUrl}?${photoQueryParams}`, {
+            method: "POST",
+          });
+          const data = await response.json();
+          ids.push(data.id);
+        }
+        url = `https://graph.facebook.com/v23.0/${params.page.id}/feed`;
+        queryParams = new URLSearchParams({
+          access_token: params.page.access_token,
+          message: params.message,
+          attached_media: JSON.stringify(
+            ids.map((id: string) => ({ media_fbid: id }))
+          ),
+          published: "true",
+        }).toString();
+      }
     }
 
     const response = await fetch(`${url}?${queryParams}`, { method: "POST" });

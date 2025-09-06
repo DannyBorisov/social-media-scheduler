@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id // Firebase UID
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Social Media Channels - if present, they are connected
+  facebook  String?  // Facebook access token or user ID
+  instagram String?  // Instagram access token or user ID  
+  linkedin  String?  // LinkedIn access token or user ID
+  
+  @@map("users")
+}

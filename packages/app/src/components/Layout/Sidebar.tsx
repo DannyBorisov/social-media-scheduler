@@ -4,11 +4,13 @@ import styles from "./Sidebar.module.css";
 
 const Sidebar: React.FC = () => {
   return (
-    <aside className="sidebar">
+    <aside className={styles.sidebar}>
       <h2>Connect Channels</h2>
-      {Object.keys(Channels).map((channel) => (
-        <ConnectChannelCard key={channel} channel={channel}  />
-      ))}
+      <div className={styles.channelsGrid}>
+        {Object.keys(Channels).map((channel) => (
+          <ConnectChannelCard key={channel} channel={channel} isConnected={false} />
+        ))}
+      </div>
     </aside>
   );
 };
@@ -32,13 +34,49 @@ const ConnectChannelCard: React.FC<{
     }
   };
 
+  const getChannelIcon = (channel: string) => {
+    switch (channel) {
+      case 'facebook':
+        return '📘';
+      case 'instagram':
+        return '📷';
+      case 'linkedin':
+        return '💼';
+      default:
+        return '🔗';
+    }
+  };
+
+  const getChannelName = (channel: string) => {
+    switch (channel) {
+      case 'facebook':
+        return 'Facebook';
+      case 'instagram':
+        return 'Instagram';
+      case 'linkedin':
+        return 'LinkedIn';
+      default:
+        return channel;
+    }
+  };
+
   return (
     <div
       role="button"
       onClick={props.isConnected ? onClick : onNotConnectedClick}
       className={styles.card}
     >
-      Connect {Channels[props.channel as keyof typeof Channels]}
+      <div className={`${styles.icon} ${styles[props.channel]}`}>
+        {getChannelIcon(props.channel)}
+      </div>
+      <div className={styles.channelInfo}>
+        <div className={styles.channelName}>
+          {getChannelName(props.channel)}
+        </div>
+        <div className={styles.channelStatus}>
+          {props.isConnected ? 'Connected' : 'Click to connect'}
+        </div>
+      </div>
     </div>
   );
 };

@@ -4,6 +4,8 @@ import { useUser } from '../../contexts/UserContext';
 import { Channels } from '../../lib/channels';
 import styles from './Sidebar.module.css';
 import Modal from '../Modal';
+import { useCreatePost } from '../../contexts/CreatePostContext';
+import Editor from '../Editor';
 
 const Sidebar: React.FC = () => {
   const { user, setUser } = useUser();
@@ -31,7 +33,10 @@ const ConnectChannelCard: React.FC<{
   isConnected: boolean;
 }> = (props) => {
   const [pages, setPages] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const createPost = useCreatePost();
 
   const onNotConnectedClick = async (e: any) => {
     e.preventDefault();
@@ -67,6 +72,19 @@ const ConnectChannelCard: React.FC<{
     return channel.at(0)!.toUpperCase() + channel.slice(1);
   };
 
+  function onSubmit() {
+    if (props.channel === Channels.facebook) {
+      apiClient.post('/channel/facebook/post', {
+        params: { message: createPost.text, page: currentPage },
+      });
+    }
+  }
+
+  function onPageChange(e: React.FormEvent<HTMLInputElement>) {
+    const page = pages.find((p) => p.id === e.currentTarget.id);
+    setCurrentPage(page);
+  }
+
   return (
     <>
       <div
@@ -86,7 +104,21 @@ const ConnectChannelCard: React.FC<{
       </div>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Channel Info">
         <p>More details about the {getChannelName(props.channel)} channel will go here.</p>
-        {JSON.stringify(pages)}
+        {props.channel === Channels.facebook && pages.length > 0 && (
+          <div>
+            <h3>Connected Facebook Pages:</h3>
+            <ul>
+              {pages.map((page) => (
+                <li key={page.id}>
+                  <input onChange={onPageChange} type="radio" name="pages" id={page.id} />
+                  <label htmlFor={page.id}>{page.name}</label>
+                </li>
+              ))}
+            </ul>
+            {/* editor */}
+            <Editor onSubmit={onSubmit} />
+          </div>
+        )}
       </Modal>
     </>
   );

@@ -106,6 +106,40 @@ router.get("/facebook/pages", authenticate, async (req, res) => {
   res.json(data);
 });
 
+router.post("/channel/:provider/post", authenticate, async (req, res) => {
+  const { provider } = req.params as { provider: Provider };
+  const { params } = req.body;
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+
+  if (!user) {
+    return;
+  }
+
+  if (provider === Provider.Facebook) {
+    if (!user.facebook) {
+      return res
+        .status(400)
+        .json({ error: "Facebook not connected for this user" });
+    }
+
+    const queryParams = new URLSearchParams({
+      access_token: params.page.access_token,
+      message: params.message,
+      published: "true",
+    }).toString();
+
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/${params.page.id}/feed?${queryParams}`,
+      {
+        method: "POST",
+      }
+    );
+    const data = await response.json();
+    console.log(data);
+  }
+  res.json({ success: true });
+});
+
 router.post("/verify-token", async (req, res) => {
   try {
     const { token } = req.body;

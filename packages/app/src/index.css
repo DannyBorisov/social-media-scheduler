@@ -1,3 +1,14 @@
-[role="button"] {
-    cursor: pointer;
+html {
+  box-sizing: border-box;
+  height: 100%;
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+[role='button'] {
+  cursor: pointer;
 }

@@ -1,8 +1,11 @@
-import apiClient from "../../api/client";
-import { Channels } from "../../lib/channels";
-import styles from "./Sidebar.module.css";
+import apiClient from '../../api/client';
+import { useUser } from '../../contexts/UserContext';
+import { Channels } from '../../lib/channels';
+import styles from './Sidebar.module.css';
 
 const Sidebar: React.FC = () => {
+  const { user } = useUser();
+
   return (
     <aside className={styles.sidebar}>
       <h2>Connect Channels</h2>
@@ -29,7 +32,7 @@ const ConnectChannelCard: React.FC<{
 
   const onClick = async () => {
     if (props.channel === Channels.facebook) {
-      const pages = await apiClient.get("/facebook/pages");
+      const pages = await apiClient.get('/facebook/pages');
       console.log(pages);
     }
   };
@@ -70,9 +73,7 @@ const ConnectChannelCard: React.FC<{
         {getChannelIcon(props.channel)}
       </div>
       <div className={styles.channelInfo}>
-        <div className={styles.channelName}>
-          {getChannelName(props.channel)}
-        </div>
+        <div className={styles.channelName}>{getChannelName(props.channel)}</div>
         <div className={styles.channelStatus}>
           {props.isConnected ? 'Connected' : 'Click to connect'}
         </div>

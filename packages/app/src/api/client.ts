@@ -1,4 +1,4 @@
-const serverURL = "http://localhost:3000";
+const serverURL = 'http://localhost:3000/api';
 
 class ApiClient {
   #baseURL: string;
@@ -15,8 +15,8 @@ class ApiClient {
     }
 
     const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
@@ -27,8 +27,8 @@ class ApiClient {
   }
   async post(endpoint: string, body: any): Promise<any> {
     const response = await fetch(`${this.#baseURL}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 

@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import apiClient from "./client";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import apiClient from './client';
 
 export interface User {
   id: string;
@@ -29,23 +29,21 @@ export interface CreateUserRequest {
 export const useCreateUser = () => {
   return useMutation({
     mutationFn: async (userData: CreateUserRequest): Promise<User> => {
-      return await apiClient.post("/users", userData);
+      return await apiClient.post('/user', userData);
     },
     onError: (error) => {
-      console.error("Error creating user:", error);
+      console.error('Error creating user:', error);
     },
   });
 };
 
-export const useGetUser = (userId?: string) => {
-  return useQuery({
-    queryKey: ["user", userId],
-    queryFn: async (): Promise<User> => {
-      if (!userId) throw new Error("User ID is required");
-      console.log("Fetching user with ID:", userId, "Length:", userId.length);
-      return await apiClient.get(`/users/${userId}`);
+export const useGetUser = () => {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiClient.get(`/user/${userId}`);
     },
-    enabled: !!userId,
-    retry: false, // Don't retry on 404 for user creation logic
+    onError: (error) => {
+      console.error('Error fetching user:', error);
+    },
   });
 };

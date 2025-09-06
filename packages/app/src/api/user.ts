@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import apiClient from './client';
 
 export interface User {
@@ -18,7 +18,7 @@ export interface User {
 }
 
 export interface CreateUserRequest {
-  id: string; // Firebase UID
+  id: string;
   email: string;
   name?: string;
   facebook?: string;

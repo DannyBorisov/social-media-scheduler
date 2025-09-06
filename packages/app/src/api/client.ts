@@ -12,7 +12,6 @@ class ApiClient {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (auth.currentUser) {
       const token = await auth.currentUser.getIdToken();
-      console.log({ token });
       headers['Authorization'] = `Bearer ${token}`;
     }
     return headers;

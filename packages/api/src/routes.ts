@@ -1,6 +1,8 @@
 import express from "express";
 import { auth } from "./firebase";
 import { prisma } from "./lib/prisma";
+import { Channel } from "@prisma/client";
+import { randomUUID } from "crypto";
 
 const authenticate = async (
   req: express.Request,
@@ -122,57 +124,58 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         .json({ error: "Facebook not connected for this user" });
     }
 
-    if (params.images) {
-    }
-    let url = `https://graph.facebook.com/v23.0/${params.page.id}/feed`;
-    let queryParams = new URLSearchParams({
-      access_token: params.page.access_token,
+    const scheduledDate = `2025-09-07T05:50:00+07:00`;
+
+    const postPayload = {
       message: params.message,
-      published: "true",
-    }).toString();
+      access_token: params.page.access_token,
+      published: false,
+      scheduled_publish_time: new Date(scheduledDate).toISOString(),
+    };
 
     if (params.images) {
-      if (params.images.length === 1) {
-        url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
-        queryParams = new URLSearchParams({
+      const ids = [];
+      for (const imageUrl of params.images) {
+        const url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
+        const payload = {
           access_token: params.page.access_token,
-          url: params.images[0],
-          caption: params.message,
-          published: "true",
-        }).toString();
-      } else {
-        const ids = [];
-        for (const imageUrl of params.images) {
-          const photoUrl = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
-          const photoQueryParams = new URLSearchParams({
-            access_token: params.page.access_token,
-            url: imageUrl,
-            published: "false",
-            temporary: "true",
-          }).toString();
-          const response = await fetch(`${photoUrl}?${photoQueryParams}`, {
+          url: imageUrl,
+          published: "false",
+          temporary: "true",
+        };
+        const response = await fetch(
+          `${url}?${new URLSearchParams(payload).toString()}`,
+          {
             method: "POST",
-          });
-          const data = await response.json();
-          ids.push(data.id);
-        }
-        url = `https://graph.facebook.com/v23.0/${params.page.id}/feed`;
-        queryParams = new URLSearchParams({
-          access_token: params.page.access_token,
-          message: params.message,
-          attached_media: JSON.stringify(
-            ids.map((id: string) => ({ media_fbid: id }))
-          ),
-          published: "true",
-        }).toString();
+          }
+        );
+        const data = await response.json();
+        ids.push(data.id);
+        postPayload.attached_media = JSON.stringify(
+          ids.map((id: string) => ({ media_fbid: id }))
+        );
       }
     }
 
-    const response = await fetch(`${url}?${queryParams}`, { method: "POST" });
+    const url = `https://graph.facebook.com/v23.0/${params.page.id}/feed`;
+    const query = new URLSearchParams(postPayload).toString();
+    const response = await fetch(`${url}?${query}`, { method: "POST" });
     const data = await response.json();
-    console.log(data);
+    console.log("Facebook post response:", data);
+
+    const newPost = await prisma.post.create({
+      data: {
+        id: randomUUID(),
+        userId: req.userId,
+        channelId: data.id,
+        channel: Channel.FACEBOOK,
+        text: params.message,
+        scheduleTime: new Date(scheduledDate),
+        // status: data.id ? "scheduled" : "failed",
+      },
+    });
+    res.json({ success: true, newPost });
   }
-  res.json({ success: true });
 });
 
 router.post("/verify-token", async (req, res) => {
@@ -189,6 +192,11 @@ router.post("/verify-token", async (req, res) => {
     console.error("Error verifying token:", error);
     res.status(401).json({ error: "Invalid token" });
   }
+});
+
+router.get("/posts", authenticate, async (req, res) => {
+  const posts = await prisma.post.findMany({ where: { userId: req.userId } });
+  res.json(posts);
 });
 
 export default router;

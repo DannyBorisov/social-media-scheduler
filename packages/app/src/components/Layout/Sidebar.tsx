@@ -74,16 +74,20 @@ const ConnectChannelCard: React.FC<{
 
   function onSubmit() {
     if (props.channel === Channels.facebook) {
-      apiClient.post('/channel/facebook/post', {
-        params: {
-          message: createPost.text,
-          page: currentPage,
-          images: [
-            'https://i.postimg.cc/qMKYk04S/IMG-0100.png',
-            'https://i.postimg.cc/7h3WnMsD/544057022-1144200984263694-2719864190532806785-n.jpg',
-          ],
-        },
-      });
+      const params = {
+        message: createPost.text,
+        page: currentPage,
+        // images: [
+        //   'https://i.postimg.cc/qMKYk04S/IMG-0100.png',
+        //   'https://i.postimg.cc/7h3WnMsD/544057022-1144200984263694-2719864190532806785-n.jpg',
+        // ],
+      };
+
+      if (createPost.scheduleTime) {
+        params['time'] = createPost.scheduleTime.toISOString();
+      }
+
+      apiClient.post('/channel/facebook/post', { params });
     }
   }
 

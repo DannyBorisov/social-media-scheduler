@@ -10,17 +10,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Channel {
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+}
+
 model User {
   id        String   @id // Firebase UID
   email     String   @unique
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Social Media Channels - if present, they are connected
-  facebook  String?  // Facebook access token or user ID
-  instagram String?  // Instagram access token or user ID  
-  linkedin  String?  // LinkedIn access token or user ID
-  
+  facebook  String? // Facebook access token or user ID
+  instagram String? // Instagram access token or user ID  
+  linkedin  String? // LinkedIn access token or user ID
+  Post      Post[]
+
   @@map("users")
+}
+
+model Post {
+  text         String?
+  id           String    @id
+  channelId    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  scheduleTime DateTime?
+  channel      Channel
+
+  @@map("posts")
 }

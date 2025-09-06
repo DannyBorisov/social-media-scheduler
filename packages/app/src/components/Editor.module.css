@@ -1,0 +1,66 @@
+.contaner {
+  display: flex;
+  flex-direction: column;
+  background: #f9f9fb;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.textarea:focus {
+  border-color: #6366f1;
+  outline: none;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.button:hover {
+  background: #4f46e5;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.filedrop {
+  border: 2px dashed #d1d5db;
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  margin-bottom: 16px;
+}

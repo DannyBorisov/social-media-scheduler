@@ -6,17 +6,20 @@ enum Provider {
 
 const CreatePostContext = createContext({
   text: '',
-  setText: (text: string) => {},
+  setText: (_: string) => {},
   provider: undefined as Provider | undefined,
-  setProvider: (provider: Provider) => {},
+  setProvider: (_: Provider) => {},
+  images: [] as File[],
+  setImages: (_: File[]) => {},
 });
 
 const CreatePostProvider = ({ children }: { children: React.ReactNode }) => {
   const [provider, setProvider] = useState<Provider>();
   const [text, setText] = useState('');
+  const [images, setImages] = useState<File[]>([]);
 
   return (
-    <CreatePostContext.Provider value={{ text, setText, provider, setProvider }}>
+    <CreatePostContext.Provider value={{ text, setText, provider, setProvider, images, setImages }}>
       {children}
     </CreatePostContext.Provider>
   );

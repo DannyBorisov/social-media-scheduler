@@ -122,18 +122,26 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         .json({ error: "Facebook not connected for this user" });
     }
 
-    const queryParams = new URLSearchParams({
+    if (params.images) {
+    }
+    let url = `https://graph.facebook.com/v23.0/${params.page.id}/feed`;
+    let queryParams = new URLSearchParams({
       access_token: params.page.access_token,
       message: params.message,
       published: "true",
     }).toString();
 
-    const response = await fetch(
-      `https://graph.facebook.com/v23.0/${params.page.id}/feed?${queryParams}`,
-      {
-        method: "POST",
-      }
-    );
+    if (params.images) {
+      url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
+      queryParams = new URLSearchParams({
+        access_token: params.page.access_token,
+        url: params.images[0], // For simplicity, posting only the first image
+        caption: params.message,
+        published: "true",
+      }).toString();
+    }
+
+    const response = await fetch(`${url}?${queryParams}`, { method: "POST" });
     const data = await response.json();
     console.log(data);
   }

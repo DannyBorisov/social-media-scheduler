@@ -75,7 +75,11 @@ const ConnectChannelCard: React.FC<{
   function onSubmit() {
     if (props.channel === Channels.facebook) {
       apiClient.post('/channel/facebook/post', {
-        params: { message: createPost.text, page: currentPage },
+        params: {
+          message: createPost.text,
+          page: currentPage,
+          images: ['https://i.postimg.cc/qMKYk04S/IMG-0100.png'],
+        },
       });
     }
   }
@@ -115,7 +119,6 @@ const ConnectChannelCard: React.FC<{
                 </li>
               ))}
             </ul>
-            {/* editor */}
             <Editor onSubmit={onSubmit} />
           </div>
         )}

@@ -1,9 +1,21 @@
+import { auth } from '../lib/firebase';
+
 const serverURL = 'http://localhost:3000/api';
 
 class ApiClient {
   #baseURL: string;
   constructor(baseURL: string) {
     this.#baseURL = baseURL;
+  }
+
+  async #buildHeaders() {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (auth.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      console.log({ token });
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
   }
 
   async get(endpoint: string, params?: Record<string, string>): Promise<any> {
@@ -16,7 +28,7 @@ class ApiClient {
 
     const response = await fetch(url.toString(), {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await this.#buildHeaders(),
     });
 
     if (!response.ok) {
@@ -28,7 +40,7 @@ class ApiClient {
   async post(endpoint: string, body: any): Promise<any> {
     const response = await fetch(`${this.#baseURL}${endpoint}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await this.#buildHeaders(),
       body: JSON.stringify(body),
     });
 

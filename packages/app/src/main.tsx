@@ -1,12 +1,13 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./index.css";
-import App from "./App.tsx";
-import FacebookAuthCallback from "./components/FacebookAuthCallback.tsx";
-import Login from "./components/Login.tsx";
-import { UserProvider } from "./contexts/UserContext";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import './index.css';
+import App from './App.tsx';
+import FacebookAuthCallback from './components/FacebookAuthCallback.tsx';
+import Login from './components/Login.tsx';
+import { UserProvider } from './contexts/UserContext';
+import { CreatePostProvider } from './contexts/CreatePostContext.tsx';
 
 const queryClient = new QueryClient();
 
@@ -20,14 +21,16 @@ const Main = () => {
   );
 };
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <BrowserRouter>
-          <Main />
-        </BrowserRouter>
-      </UserProvider>
+      <CreatePostProvider>
+        <UserProvider>
+          <BrowserRouter>
+            <Main />
+          </BrowserRouter>
+        </UserProvider>
+      </CreatePostProvider>
     </QueryClientProvider>
   </StrictMode>
 );

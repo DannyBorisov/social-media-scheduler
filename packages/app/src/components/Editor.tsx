@@ -32,7 +32,6 @@ const Editor: React.FC<Props> = (props) => {
 
   return (
     <form className={styles.container} onSubmit={handleSubmit}>
-      <h2>Post Editor</h2>
       <div className={styles.editor}>
         <textarea
           className={styles.textarea}

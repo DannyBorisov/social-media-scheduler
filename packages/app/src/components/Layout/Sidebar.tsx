@@ -7,6 +7,10 @@ import Modal from '../Modal';
 import { useCreatePost } from '../../contexts/CreatePostContext';
 import Editor from '../Editor';
 import { cloudStorage } from '../../lib/firebase';
+import { Facebook } from 'lucide-react';
+import Preview from '../Preview';
+
+Facebook;
 
 const Sidebar: React.FC = () => {
   const { user, setUser } = useUser();
@@ -17,7 +21,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside className={styles.sidebar}>
-      <h2>Connect Channels</h2>
       <div className={styles.channelsGrid}>
         {Object.keys(Channels).map((channel) => (
           <ConnectChannelCard
@@ -78,14 +81,13 @@ const ConnectChannelCard: React.FC<{
     return channel.at(0)!.toUpperCase() + channel.slice(1);
   };
 
-  function onSubmit() {
+  async function onSubmit() {
     const imageURLs: string[] = [];
     if (createPost.images.length !== 0) {
       for (const img of createPost.images) {
         const path = `${props.user?.id}/${Date.now()}-${Math.random()}.png`;
 
-        cloudStorage.upload(img).then((url) => {
-          console.log('Uploaded image URL:', url);
+        cloudStorage.upload(img, path).then((url) => {
           cloudStorage.getDownloadURL(url).then((downloadURL) => {
             imageURLs.push(downloadURL);
           });
@@ -130,7 +132,6 @@ const ConnectChannelCard: React.FC<{
         </div>
       </div>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Channel Info">
-        <p>More details about the {getChannelName(props.channel)} channel will go here.</p>
         {props.channel === Channels.facebook && pages.length > 0 && (
           <div>
             <h3>Connected Facebook Pages:</h3>

@@ -1,11 +1,10 @@
 .sidebar {
   width: 300px;
-  min-width: 300px;
+  min-width: 15rem;
   padding: 1.5rem;
   background-color: #f8fafc;
   border-right: 1px solid #e2e8f0;
   height: calc(100vh - 4rem);
-  background-color: red;
 }
 
 .sidebar h2 {

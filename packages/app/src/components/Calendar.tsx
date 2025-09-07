@@ -1,8 +1,6 @@
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import styles from './Calendar.module.css';
-import { useState } from 'react';
-import CreatePostModal from './CreatePostModal';
 import { useGetPosts } from '../api/post';
 import { calendarEventForPost } from '../lib/posts';
 
@@ -11,8 +9,17 @@ const Calendar: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <CalendarHeader />
       <FullCalendar
+        dayCellClassNames={styles.dayCell}
+        dayCellContent={(args) => {
+          return (
+            <>
+              <div>{args.dayNumberText}</div>
+              <AddPostDayButton onClick={() => alert('Add post for ' + args.date)} />
+            </>
+          );
+        }}
+        viewClassNames={styles.calendar}
         loading={() => posts.isLoading}
         height="auto"
         events={posts.data?.length ? posts.data.map(calendarEventForPost) : []}
@@ -25,23 +32,10 @@ const Calendar: React.FC = () => {
 
 export default Calendar;
 
-const CalendarHeader: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const onClick = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
+const AddPostDayButton: React.FC<{ onClick: () => void }> = (props) => {
   return (
-    <>
-      <header className={styles.header}>
-        <button onClick={onClick}>+ Create post</button>
-      </header>
-      <CreatePostModal isOpen={isModalOpen} onClose={handleCloseModal} />
-    </>
+    <button className={styles.addPostButton} onClick={props.onClick}>
+      +
+    </button>
   );
 };

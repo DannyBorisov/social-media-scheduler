@@ -10,3 +10,16 @@
   font-size: 1.5rem;
   font-weight: bold;
 }
+
+.addPostButton {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.dayCell {
+  position: relative;
+  &:hover .addPostButton {
+    display: block;
+  }
+}

@@ -22,7 +22,7 @@ const authenticate = async (
     return res.status(401).json({ error: "Unauthorized" });
   });
   const decoded = await auth.verifyIdToken(token);
-  req.userId = decoded.uid;
+  (req as any).userId = decoded.uid;
   next();
 };
 
@@ -105,6 +105,16 @@ router.get("/facebook/pages", authenticate, async (req, res) => {
     `https://graph.facebook.com/v23.0/me/accounts?access_token=${user.facebook}`
   );
   const data = await response.json();
+
+  for (const page of data.data) {
+    console.log(`Page: ${page.name}, ID: ${page.id}`);
+    const picture = await fetch(
+      `https://graph.facebook.com/v23.0/${page.id}/picture?redirect=false`
+    );
+    const pictureData = await picture.json();
+    page.picture = pictureData.data.url;
+  }
+
   res.json(data);
 });
 
@@ -124,14 +134,17 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         .json({ error: "Facebook not connected for this user" });
     }
 
-    const scheduledDate = `2025-09-07T05:50:00+07:00`;
-
     const postPayload = {
       message: params.message,
       access_token: params.page.access_token,
-      published: false,
-      scheduled_publish_time: new Date(scheduledDate).toISOString(),
+      published: !params.time,
     };
+
+    if (params.time) {
+      const scheduledDate = new Date(params.time);
+      const toTime = scheduledDate.getTime();
+      postPayload.scheduled_publish_time = Math.floor(toTime / 1000);
+    }
 
     if (params.images) {
       const ids = [];
@@ -170,7 +183,7 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         channelId: data.id,
         channel: Channel.FACEBOOK,
         text: params.message,
-        scheduleTime: new Date(scheduledDate),
+        scheduleTime: new Date(params.time),
         // status: data.id ? "scheduled" : "failed",
       },
     });
@@ -195,7 +208,7 @@ router.post("/verify-token", async (req, res) => {
 });
 
 router.get("/posts", authenticate, async (req, res) => {
-  const posts = await prisma.post.findMany({ where: { userId: req.userId } });
+  const posts = await prisma.post.findMany({ where: { userId: (req as any).userId } });
   res.json(posts);
 });
 

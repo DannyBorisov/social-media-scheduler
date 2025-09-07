@@ -4,7 +4,8 @@
   padding: 1.5rem;
   background-color: #f8fafc;
   border-right: 1px solid #e2e8f0;
-  height: 100%;
+  height: calc(100vh - 4rem);
+  background-color: red;
 }
 
 .sidebar h2 {
@@ -61,7 +62,14 @@
 }
 
 .instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
 }
 
 .linkedin {

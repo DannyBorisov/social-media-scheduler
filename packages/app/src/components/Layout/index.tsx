@@ -1,6 +1,6 @@
-import Header from "./Header";
-import Sidebar from "./Sidebar";
-import styles from "./Layout.module.css";
+import Header from './Header';
+import Sidebar from './Sidebar';
+import styles from './Layout.module.css';
 
 interface Props {
   children: React.ReactNode;
@@ -8,7 +8,7 @@ interface Props {
 
 const Laoyut: React.FC<Props> = (props) => {
   return (
-    <div className="layout">
+    <div style={{ height: '100vh' }}>
       <Header />
       <div className={styles.main}>
         <Sidebar />

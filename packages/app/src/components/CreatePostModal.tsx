@@ -1,36 +1,28 @@
-import React, { useState } from "react";
-import Modal from "./Modal";
-import styles from "./CreatePostModal.module.css";
+import React, { useState } from 'react';
+import Modal from './Modal';
+import styles from './CreatePostModal.module.css';
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
-  const [postContent, setPostContent] = useState("");
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) => {
+  const [postContent, setPostContent] = useState('');
 
   const handlePublish = () => {
-    console.log("Publishing post:", postContent);
-    setPostContent("");
+    console.log('Publishing post:', postContent);
+    setPostContent('');
     onClose();
   };
 
   const handleClose = () => {
-    setPostContent("");
+    setPostContent('');
     onClose();
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Create Post"
-      size="medium"
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title="Create Post" size="medium">
       <div className={styles.container}>
         <textarea
           className={styles.textEditor}

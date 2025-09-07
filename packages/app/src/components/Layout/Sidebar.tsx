@@ -6,6 +6,7 @@ import styles from './Sidebar.module.css';
 import Modal from '../Modal';
 import { useCreatePost } from '../../contexts/CreatePostContext';
 import Editor from '../Editor';
+import { cloudStorage } from '../../lib/firebase';
 
 const Sidebar: React.FC = () => {
   const { user, setUser } = useUser();
@@ -19,7 +20,12 @@ const Sidebar: React.FC = () => {
       <h2>Connect Channels</h2>
       <div className={styles.channelsGrid}>
         {Object.keys(Channels).map((channel) => (
-          <ConnectChannelCard key={channel} channel={channel} isConnected={!!user[channel]} />
+          <ConnectChannelCard
+            key={channel}
+            channel={channel}
+            user={user}
+            isConnected={!!user[channel]}
+          />
         ))}
       </div>
     </aside>
@@ -31,6 +37,7 @@ export default Sidebar;
 const ConnectChannelCard: React.FC<{
   channel: string;
   isConnected: boolean;
+  user: any;
 }> = (props) => {
   const [pages, setPages] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<string>('');
@@ -47,7 +54,6 @@ const ConnectChannelCard: React.FC<{
   const onClick = async () => {
     if (props.channel === Channels.facebook) {
       const { data: pages } = await apiClient.get('/facebook/pages');
-      console.log('Fetched Facebook pages:', pages);
       if (pages && pages.length > 0) {
         setPages(pages);
         setIsModalOpen(true);
@@ -73,14 +79,24 @@ const ConnectChannelCard: React.FC<{
   };
 
   function onSubmit() {
+    const imageURLs: string[] = [];
+    if (createPost.images.length !== 0) {
+      for (const img of createPost.images) {
+        const path = `${props.user?.id}/${Date.now()}-${Math.random()}.png`;
+
+        cloudStorage.upload(img).then((url) => {
+          console.log('Uploaded image URL:', url);
+          cloudStorage.getDownloadURL(url).then((downloadURL) => {
+            imageURLs.push(downloadURL);
+          });
+        });
+      }
+    }
     if (props.channel === Channels.facebook) {
       const params = {
         message: createPost.text,
         page: currentPage,
-        // images: [
-        //   'https://i.postimg.cc/qMKYk04S/IMG-0100.png',
-        //   'https://i.postimg.cc/7h3WnMsD/544057022-1144200984263694-2719864190532806785-n.jpg',
-        // ],
+        images: imageURLs,
       };
 
       if (createPost.scheduleTime) {
@@ -121,6 +137,7 @@ const ConnectChannelCard: React.FC<{
             <ul>
               {pages.map((page) => (
                 <li key={page.id}>
+                  <img src={page.picture} alt={page.name} width={20} height={20} />
                   <input onChange={onPageChange} type="radio" name="pages" id={page.id} />
                   <label htmlFor={page.id}>{page.name}</label>
                 </li>

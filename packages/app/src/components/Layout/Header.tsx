@@ -1,13 +1,15 @@
 import { useUser } from '../../contexts/UserContext';
+import styles from './Header.module.css';
 
 const Header: React.FC = () => {
   const { user } = useUser();
 
+  let title = 'Social Scheduler';
   if (user) {
-    return <header className="header">Social Scheduler - Welcome, {user.email}</header>;
+    title += ` - Welcome, ${user.email}`;
   }
 
-  return <header className="header">Social Scheduler</header>;
+  return <header className={styles.header}>{title}</header>;
 };
 
 export default Header;

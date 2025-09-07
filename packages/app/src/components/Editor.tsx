@@ -10,6 +10,7 @@ interface Props {
 const Editor: React.FC<Props> = (props) => {
   const { text, setText, images, setImages, scheduleTime, setScheduleTime } = useCreatePost();
   const [isPostNow, setIsPostNow] = useState(true);
+  const [previews, setPreiviews] = useState<string[]>([]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -22,10 +23,11 @@ const Editor: React.FC<Props> = (props) => {
     fr.onload = () => {
       if (fr.result) {
         const data = fr.result as string;
-        setImages((prev) => [...prev, data]);
+        setPreiviews((prev) => [...prev, data]);
       }
     };
     fr.readAsDataURL(file);
+    setImages([...images, file]);
   }
 
   return (
@@ -39,9 +41,9 @@ const Editor: React.FC<Props> = (props) => {
           value={text}
         />
         <div>
-          {images.length > 0 && (
+          {previews.length > 0 && (
             <div className={styles.imagesPreview}>
-              {images.map((img, idx) => (
+              {previews.map((img, idx) => (
                 // eslint-disable-next-line react/no-array-index-key
                 <img width={100} key={idx} src={img as string} alt={`preview-${idx}`} />
               ))}

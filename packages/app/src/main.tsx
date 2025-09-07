@@ -8,6 +8,7 @@ import FacebookAuthCallback from './components/FacebookAuthCallback.tsx';
 import Login from './components/Login.tsx';
 import { UserProvider } from './contexts/UserContext';
 import { CreatePostProvider } from './contexts/CreatePostContext.tsx';
+import 'react-datetime/css/react-datetime.css';
 
 const queryClient = new QueryClient();
 

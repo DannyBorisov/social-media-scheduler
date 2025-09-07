@@ -3,7 +3,11 @@ import { signOut } from 'firebase/auth';
 import { useGetUser, type User } from '../api/user';
 import { auth } from '../lib/firebase';
 
-const UserContext = createContext<{ user: User | null; setUser: (uuser: User) => void; logout: () => void }>({
+const UserContext = createContext<{
+  user: User | null;
+  setUser: (uuser: User) => void;
+  logout: () => void;
+}>({
   user: null,
   setUser: () => {},
   logout: () => {},

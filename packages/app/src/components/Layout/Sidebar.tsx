@@ -1,19 +1,12 @@
-import { useState } from 'react';
 import apiClient from '../../api/client';
+import { useCreatePost } from '../../contexts/CreatePostContext';
 import { useUser } from '../../contexts/UserContext';
 import { Channels } from '../../lib/channels';
 import styles from './Sidebar.module.css';
-import Modal from '../Modal';
-import { useCreatePost } from '../../contexts/CreatePostContext';
-import Editor from '../Editor';
-import { cloudStorage } from '../../lib/firebase';
-import { Facebook } from 'lucide-react';
-import Preview from '../Preview';
-
-Facebook;
+import { FaFacebook } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
-  const { user, setUser } = useUser();
+  const { user } = useUser();
 
   if (!user) {
     return null;
@@ -23,12 +16,7 @@ const Sidebar: React.FC = () => {
     <aside className={styles.sidebar}>
       <div className={styles.channelsGrid}>
         {Object.keys(Channels).map((channel) => (
-          <ConnectChannelCard
-            key={channel}
-            channel={channel}
-            user={user}
-            isConnected={!!user[channel]}
-          />
+          <ChannelCard key={channel} channel={channel} isConnected={!!user[channel]} />
         ))}
       </div>
     </aside>
@@ -37,117 +25,43 @@ const Sidebar: React.FC = () => {
 
 export default Sidebar;
 
-const ConnectChannelCard: React.FC<{
+const ChannelCard: React.FC<{
   channel: string;
   isConnected: boolean;
-  user: any;
 }> = (props) => {
-  const [pages, setPages] = useState<any[]>([]);
-  const [currentPage, setCurrentPage] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const createPost = useCreatePost();
-
-  const onNotConnectedClick = async (e: any) => {
-    e.preventDefault();
-    const { url } = await apiClient.get(`/channel/auth/${props.channel}`);
-    window.location.href = url;
-  };
-
-  const onClick = async () => {
-    if (props.channel === Channels.facebook) {
-      const { data: pages } = await apiClient.get('/facebook/pages');
-      if (pages && pages.length > 0) {
-        setPages(pages);
-        setIsModalOpen(true);
-      }
-    }
-  };
-
-  const getChannelIcon = (channel: string) => {
-    switch (channel) {
-      case 'facebook':
-        return '📘';
-      case 'instagram':
-        return '📷';
-      case 'linkedin':
-        return '💼';
-      default:
-        return '🔗';
-    }
-  };
-
+  const { setUser, user } = useUser();
+  const { setModalOpen, setChannel } = useCreatePost();
   const getChannelName = (channel: string) => {
     return channel.at(0)!.toUpperCase() + channel.slice(1);
   };
 
-  async function onSubmit() {
-    const imageURLs: string[] = [];
-    if (createPost.images.length !== 0) {
-      for (const img of createPost.images) {
-        const path = `${props.user?.id}/${Date.now()}-${Math.random()}.png`;
-
-        cloudStorage.upload(img, path).then((url) => {
-          cloudStorage.getDownloadURL(url).then((downloadURL) => {
-            imageURLs.push(downloadURL);
-          });
-        });
+  async function onClick() {
+    if (props.isConnected) {
+      if (props.channel === Channels.facebook) {
+        const { data: pages } = await apiClient.get('/facebook/pages');
+        setUser({ ...user, facebookPages: pages });
+        setChannel('facebook');
+        setModalOpen(true);
       }
+    } else {
+      const { url } = await apiClient.get(`/channel/auth/${props.channel}`);
+      window.location.href = url;
     }
-    if (props.channel === Channels.facebook) {
-      const params = {
-        message: createPost.text,
-        page: currentPage,
-        images: imageURLs,
-      };
-
-      if (createPost.scheduleTime) {
-        params['time'] = createPost.scheduleTime.toISOString();
-      }
-
-      apiClient.post('/channel/facebook/post', { params });
-    }
-  }
-
-  function onPageChange(e: React.FormEvent<HTMLInputElement>) {
-    const page = pages.find((p) => p.id === e.currentTarget.id);
-    setCurrentPage(page);
   }
 
   return (
     <>
-      <div
-        role="button"
-        onClick={props.isConnected ? onClick : onNotConnectedClick}
-        className={styles.card}
-      >
+      <div role="button" onClick={onClick} className={styles.card}>
         <div className={`${styles.icon} ${styles[props.channel]}`}>
-          {getChannelIcon(props.channel)}
+          <FaFacebook width={10} />
         </div>
         <div className={styles.channelInfo}>
           <div className={styles.channelName}>{getChannelName(props.channel)}</div>
           <div className={styles.channelStatus}>
-            {props.isConnected ? 'Connected' : 'Click to connect'}
+            <small>{props.isConnected ? 'Connected' : 'Click to connect'}</small>
           </div>
         </div>
       </div>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Channel Info">
-        {props.channel === Channels.facebook && pages.length > 0 && (
-          <div>
-            <h3>Connected Facebook Pages:</h3>
-            <ul>
-              {pages.map((page) => (
-                <li key={page.id}>
-                  <img src={page.picture} alt={page.name} width={20} height={20} />
-                  <input onChange={onPageChange} type="radio" name="pages" id={page.id} />
-                  <label htmlFor={page.id}>{page.name}</label>
-                </li>
-              ))}
-            </ul>
-            <Editor onSubmit={onSubmit} />
-          </div>
-        )}
-      </Modal>
     </>
   );
 };

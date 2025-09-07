@@ -12,7 +12,7 @@ const Laoyut: React.FC<Props> = (props) => {
       <Header />
       <div className={styles.main}>
         <Sidebar />
-        <div className="content">{props.children}</div>
+        <div className={styles.content}>{props.children}</div>
       </div>
     </div>
   );

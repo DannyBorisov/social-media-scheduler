@@ -3,9 +3,11 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import styles from './Calendar.module.css';
 import { useGetPosts } from '../api/post';
 import { calendarEventForPost } from '../lib/posts';
+import { useCreatePost } from '../contexts/CreatePostContext';
 
 const Calendar: React.FC = () => {
   const posts = useGetPosts();
+  const { setModalOpen, setScheduleTime } = useCreatePost();
 
   return (
     <div className={styles.container}>
@@ -15,13 +17,18 @@ const Calendar: React.FC = () => {
           return (
             <>
               <div>{args.dayNumberText}</div>
-              <AddPostDayButton onClick={() => alert('Add post for ' + args.date)} />
+              <AddPostDayButton
+                onClick={() => {
+                  setScheduleTime(args.date);
+                  setModalOpen(true);
+                }}
+              />
             </>
           );
         }}
         viewClassNames={styles.calendar}
         loading={() => posts.isLoading}
-        height="auto"
+        height="100%"
         events={posts.data?.length ? posts.data.map(calendarEventForPost) : []}
         plugins={[dayGridPlugin]}
         initialView="dayGridMonth"

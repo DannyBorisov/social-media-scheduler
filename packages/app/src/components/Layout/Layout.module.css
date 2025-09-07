@@ -8,3 +8,9 @@
   flex: 1;
   gap: 1rem;
 }
+
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}

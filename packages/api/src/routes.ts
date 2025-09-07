@@ -4,6 +4,12 @@ import { prisma } from "./lib/prisma";
 import { Channel } from "@prisma/client";
 import { randomUUID } from "crypto";
 
+declare namespace Express {
+  interface Request {
+    userId?: string;
+  }
+}
+
 const authenticate = async (
   req: express.Request,
   res: express.Response,
@@ -183,7 +189,7 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         channelId: data.id,
         channel: Channel.FACEBOOK,
         text: params.message,
-        scheduleTime: new Date(params.time),
+        ...(params.time && { scheduleTime: new Date(params.time) }),
         // status: data.id ? "scheduled" : "failed",
       },
     });
@@ -208,7 +214,9 @@ router.post("/verify-token", async (req, res) => {
 });
 
 router.get("/posts", authenticate, async (req, res) => {
-  const posts = await prisma.post.findMany({ where: { userId: (req as any).userId } });
+  const posts = await prisma.post.findMany({
+    where: { userId: (req as any).userId },
+  });
   res.json(posts);
 });
 

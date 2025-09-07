@@ -2,6 +2,7 @@ import type React from 'react';
 import { useCreatePost } from '../contexts/CreatePostContext';
 import { useState, type FormEvent } from 'react';
 import styles from './Editor.module.css';
+import Datetime from 'react-datetime';
 
 interface Props {
   onSubmit: () => void;
@@ -64,10 +65,9 @@ const Editor: React.FC<Props> = (props) => {
         </select>
 
         {!isPostNow && (
-          <input
-            type="datetime-local"
+          <Datetime
             value={scheduleTime?.toDateString() || ''}
-            onChange={(e) => setScheduleTime(new Date(e.target.value))}
+            onChange={(value) => setScheduleTime(new Date(value.toString()))}
           />
         )}
 

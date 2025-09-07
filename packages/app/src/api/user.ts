@@ -10,6 +10,7 @@ export interface User {
   facebook?: string | null;
   instagram?: string | null;
   linkedin?: string | null;
+  facebookPages: { id: string; name: string; picture: string }[];
   connectedChannels: {
     facebook: boolean;
     instagram: boolean;

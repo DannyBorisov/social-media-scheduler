@@ -49,6 +49,20 @@ class ApiClient {
 
     return response.json();
   }
+
+  async put(endpoint: string, body: any): Promise<any> {
+    const response = await fetch(`${this.#baseURL}${endpoint}`, {
+      method: 'PUT',
+      headers: await this.#buildHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 }
 
 const apiClient = new ApiClient(serverURL);

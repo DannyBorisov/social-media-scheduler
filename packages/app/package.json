@@ -12,17 +12,18 @@
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
     "@tanstack/react-query": "^5.87.1",
     "firebase": "^12.2.1",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-avatar": "^5.0.4",
+    "react-datetime": "^3.3.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^7.8.2",
-    "react-datetime": "^3.3.1"
+    "react-router-dom": "^7.8.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

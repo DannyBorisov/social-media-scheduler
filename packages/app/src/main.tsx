@@ -17,6 +17,7 @@ const Main = () => {
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/auth/facebook" element={<FacebookAuthCallback />} />
+      <Route path="/auth/tiktok" element={<>VERIFY TIKTOK</>} />
       <Route path="/login" element={<Login />} />
     </Routes>
   );

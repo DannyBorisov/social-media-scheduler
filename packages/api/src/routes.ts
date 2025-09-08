@@ -1,8 +1,8 @@
 import express from "express";
-import { auth } from "./firebase";
+import { auth, storage } from "./firebase";
 import { prisma } from "./lib/prisma";
 import { Channel } from "@prisma/client";
-import { randomUUID } from "crypto";
+import crypto, { randomUUID } from "crypto";
 
 declare namespace Express {
   interface Request {
@@ -34,6 +34,7 @@ const authenticate = async (
 
 enum Provider {
   Facebook = "facebook",
+  Tiktok = "tiktok",
 }
 
 const router = express.Router();
@@ -65,6 +66,23 @@ router.get("/channel/auth/:provider", authenticate, async (req, res) => {
       response_type: "code",
     });
     const authURL = `https://www.facebook.com/v23.0/dialog/oauth?${queryParams.toString()}`;
+    res.json({ url: authURL });
+  }
+
+  if (provider === Provider.Tiktok) {
+    const queryParams = new URLSearchParams({
+      client_key: process.env.TIKTOK_CLIENT_KEY as string,
+      redirect_uri: process.env.TIKTOK_REDIRECT_URI as string,
+      response_type: "code",
+      scope: "user.info.basic,video.list,video.upload",
+      state: randomUUID(),
+      code_challenge: crypto
+        .createHash("sha256")
+        .update(process.env.TIKTOK_CODE_VERIFIER as string)
+        .digest("hex"),
+      code_challenge_method: "S256",
+    });
+    const authURL = `https://www.tiktok.com/v2/auth/authorize/?${queryParams.toString()}`;
     res.json({ url: authURL });
   }
 });
@@ -154,6 +172,7 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
 
     if (params.images) {
       const ids = [];
+
       for (const imageUrl of params.images) {
         const url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
         const payload = {
@@ -164,9 +183,7 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         };
         const response = await fetch(
           `${url}?${new URLSearchParams(payload).toString()}`,
-          {
-            method: "POST",
-          }
+          { method: "POST" }
         );
         const data = await response.json();
         ids.push(data.id);
@@ -180,7 +197,6 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
     const query = new URLSearchParams(postPayload).toString();
     const response = await fetch(`${url}?${query}`, { method: "POST" });
     const data = await response.json();
-    console.log("Facebook post response:", data);
 
     const newPost = await prisma.post.create({
       data: {
@@ -189,10 +205,29 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
         channelId: data.id,
         channel: Channel.FACEBOOK,
         text: params.message,
-        ...(params.time && { scheduleTime: new Date(params.time) }),
+        scheduleTime: params.time ? new Date(params.time) : new Date(),
         // status: data.id ? "scheduled" : "failed",
       },
     });
+
+    // await Promise.all(
+    //   params.images.map((imageURL) => {
+    //     prisma.media.create({
+    //       data: {
+    //         id: randomUUID(),
+    //         gcsKey: imageURL,
+    //         postId: newPost.id,
+    //         userId: req.userId as string,
+    //       },
+    //     });
+    //   })
+    // );
+
+    await prisma.post.update({
+      where: { id: newPost.id },
+      data: { medias: params.images.join(",") },
+    });
+
     res.json({ success: true, newPost });
   }
 });
@@ -217,7 +252,37 @@ router.get("/posts", authenticate, async (req, res) => {
   const posts = await prisma.post.findMany({
     where: { userId: (req as any).userId },
   });
-  res.json(posts);
+
+  const postsWithMedia = [];
+  for (const post of posts) {
+    if (post.medias) {
+      const mediaGcsPaths = post.medias.split(",");
+      const mediaPromises = [];
+      for (const gcsPath of mediaGcsPaths) {
+        console.log({ gcsPath });
+        const promise = storage
+          .bucket(process.env.MEDIA_BUCKET_NAME)
+          .file(gcsPath, {})
+          .getSignedUrl({
+            action: "read",
+            expires: Date.now() + 60 * 60 * 1000, // 1 hour
+          })
+          .then(([url]) => url)
+
+          .catch((err) => {
+            console.error(`Error getting download URL for ${gcsPath}:`, err);
+            return null;
+          });
+        mediaPromises.push(promise);
+      }
+
+      const urls = await Promise.all(mediaPromises);
+      post.medias = urls.filter((url) => !!url);
+      postsWithMedia.push(post);
+    }
+  }
+
+  res.json(postsWithMedia);
 });
 
 export default router;

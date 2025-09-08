@@ -1,9 +1,11 @@
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 import styles from './Calendar.module.css';
 import { useGetPosts } from '../api/post';
 import { calendarEventForPost } from '../lib/posts';
 import { useCreatePost } from '../contexts/CreatePostContext';
+import ChannelPostCard from './ChannelPostCard';
 
 const Calendar: React.FC = () => {
   const posts = useGetPosts();
@@ -26,11 +28,14 @@ const Calendar: React.FC = () => {
             </>
           );
         }}
+        eventContent={(args) => {
+          return <ChannelPostCard event={args.event} />;
+        }}
         viewClassNames={styles.calendar}
         loading={() => posts.isLoading}
         height="100%"
         events={posts.data?.length ? posts.data.map(calendarEventForPost) : []}
-        plugins={[dayGridPlugin]}
+        plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
       />
     </div>

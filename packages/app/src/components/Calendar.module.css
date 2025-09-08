@@ -43,7 +43,8 @@
 }
 
 .calendar :global(.fc-daygrid-day-frame) {
-  height: 100%;
+  max-height: 175px;
+  height: 175px;
   min-height: 0;
 }
 
@@ -53,4 +54,107 @@
 
 .calendar :global(.fc-scrollgrid-sync-table) {
   height: 100%;
+}
+
+/* Header Toolbar Styling */
+.calendar :global(.fc-header-toolbar) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  border: none;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+}
+
+.calendar :global(.fc-toolbar-chunk) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar :global(.fc-button-group) {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar :global(.fc-button) {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border-radius: 0;
+}
+
+.calendar :global(.fc-button:hover) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calendar :global(.fc-button:focus) {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.calendar :global(.fc-button-active) {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.calendar :global(.fc-button:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calendar :global(.fc-toolbar-title) {
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+/* Calendar Grid Styling */
+.calendar :global(.fc-daygrid-day-number) {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.calendar :global(.fc-col-header-cell) {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 0.5rem;
+}
+
+.calendar :global(.fc-daygrid-day) {
+  border-color: #e5e7eb;
+}
+
+.calendar :global(.fc-daygrid-day:hover) {
+  background-color: #f9fafb;
+}
+
+.calendar :global(.fc-day-today) {
+  background-color: #fef7cd !important;
+  border-color: #f59e0b !important;
+}
+
+.calendar :global(.fc-day-today .fc-daygrid-day-number) {
+  color: #d97706;
+  font-weight: 700;
 }

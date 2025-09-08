@@ -13,6 +13,7 @@ interface Props {
 }
 
 const CreatePost: React.FC<Props> = ({ channel }) => {
+  const createPost = useCreatePost();
   const [currentPage, setCurrentPage] = useState<string>('');
   const { user } = useUser();
 
@@ -31,18 +32,14 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
     return availableChannels;
   }, [user]);
 
-  const createPost = useCreatePost();
   async function onSubmit() {
     const imageURLs: string[] = [];
+
     if (createPost.images.length !== 0) {
       for (const img of createPost.images) {
-        const path = `${user?.id}/${Date.now()}-${Math.random()}.png`;
-
-        cloudStorage.upload(img, path).then((url) => {
-          cloudStorage.getDownloadURL(url).then((downloadURL) => {
-            imageURLs.push(downloadURL);
-          });
-        });
+        const path = `${user?.id}/medias/${Date.now()}-${Math.random()}.png`;
+        await cloudStorage.upload(img, path);
+        imageURLs.push(path);
       }
     }
 

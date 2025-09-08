@@ -22,8 +22,9 @@ export const cloudStorage = {
     await uploadBytes(fileRef, file);
     return `gs://${bucketName}/${path}`;
   },
-  getDownloadURL: async (path: string) => {
-    const fileRef = ref(storageRef, path);
+
+  getDownloadUrl: async (path: string) => {
+    const fileRef = ref(storage, path);
     return getDownloadURL(fileRef);
   },
 };

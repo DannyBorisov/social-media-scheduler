@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../contexts/UserContext';
 import styles from './Header.module.css';
 
 const Header: React.FC = () => {
   const { user, logout } = useUser();
+  const navigate = useNavigate();
 
   const getInitials = (name: string | null | undefined, email: string) => {
     if (name) {
@@ -20,6 +22,11 @@ const Header: React.FC = () => {
     return name || email.split('@')[0];
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.logo}>
@@ -35,7 +42,7 @@ const Header: React.FC = () => {
               <span className={styles.userEmail}>{user.email}</span>
             </div>
           </div>
-          <button className={styles.signoutButton} onClick={logout}>
+          <button className={styles.signoutButton} onClick={handleLogout}>
             Sign Out
           </button>
         </div>

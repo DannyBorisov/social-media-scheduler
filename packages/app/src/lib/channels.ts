@@ -1,6 +1,6 @@
-export const Channels = {
-  facebook: "facebook",
-  instagram: "instagram",
-  linkedin: "linkedin",
-  tiktok: "tiktok",
-};
+export enum Channel {
+  Facebook = 'FACEBOOK',
+  Instagram = 'INSTAGRAM',
+  LinkedIn = 'LINKEDIN',
+  Tiktok = 'TIKTOK',
+}

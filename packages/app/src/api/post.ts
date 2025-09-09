@@ -5,7 +5,7 @@ import { useUser } from '../contexts/UserContext';
 export const useGetPosts = () => {
   const { user } = useUser();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['posts', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -14,4 +14,6 @@ export const useGetPosts = () => {
     enabled: !!user,
     refetchOnWindowFocus: false,
   });
+
+  return query;
 };

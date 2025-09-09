@@ -4,9 +4,11 @@ import { prisma } from "./lib/prisma";
 import { Channel } from "@prisma/client";
 import crypto, { randomUUID } from "crypto";
 
-declare namespace Express {
-  interface Request {
-    userId?: string;
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
   }
 }
 
@@ -45,7 +47,10 @@ router.get("/health", (req, res) => {
 
 router.get("/user/:id", async (req, res) => {
   const { id } = req.params as { id: string };
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: { facebook: true },
+  });
   res.json(user);
 });
 
@@ -93,6 +98,7 @@ router.get(
   async (req, res) => {
     const { provider } = req.params as { provider: Provider };
     const { code } = req.query as { code: string };
+
     if (provider === Provider.Facebook) {
       const queryParams = new URLSearchParams({
         client_id: process.env.FACEBOOK_APP_ID as string,
@@ -102,15 +108,17 @@ router.get(
       }).toString();
       const response = await fetch(
         `https://graph.facebook.com/v23.0/oauth/access_token?${queryParams}`,
-        {
-          method: "GET",
-        }
+        { method: "GET" }
       );
       const data = await response.json();
       if (data.access_token) {
-        await prisma.user.update({
-          where: { id: req.userId },
-          data: { facebook: data.access_token },
+        await prisma.facebookIntegration.create({
+          data: {
+            id: randomUUID(),
+            userId: req.userId as string,
+            accessToken: data.access_token,
+            pages: [],
+          },
         });
         res.json({ success: true });
       }
@@ -119,7 +127,11 @@ router.get(
 );
 
 router.get("/facebook/pages", authenticate, async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    include: { facebook: true },
+  });
+
   if (!user || !user.facebook) {
     return res
       .status(400)
@@ -131,7 +143,6 @@ router.get("/facebook/pages", authenticate, async (req, res) => {
   const data = await response.json();
 
   for (const page of data.data) {
-    console.log(`Page: ${page.name}, ID: ${page.id}`);
     const picture = await fetch(
       `https://graph.facebook.com/v23.0/${page.id}/picture?redirect=false`
     );
@@ -139,13 +150,21 @@ router.get("/facebook/pages", authenticate, async (req, res) => {
     page.picture = pictureData.data.url;
   }
 
+  await prisma.facebookIntegration.update({
+    where: { userId: req.userId },
+    data: { pages: data.data },
+  });
+
   res.json(data);
 });
 
 router.post("/channel/:provider/post", authenticate, async (req, res) => {
   const { provider } = req.params as { provider: Provider };
   const { params } = req.body;
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    include: { facebook: true },
+  });
 
   if (!user) {
     return;
@@ -201,50 +220,16 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
     const newPost = await prisma.post.create({
       data: {
         id: randomUUID(),
-        userId: req.userId,
+        userId: req.userId!,
         channelId: data.id,
         channel: Channel.FACEBOOK,
         text: params.message,
         scheduleTime: params.time ? new Date(params.time) : new Date(),
-        // status: data.id ? "scheduled" : "failed",
+        medias: params.images,
       },
     });
 
-    // await Promise.all(
-    //   params.images.map((imageURL) => {
-    //     prisma.media.create({
-    //       data: {
-    //         id: randomUUID(),
-    //         gcsKey: imageURL,
-    //         postId: newPost.id,
-    //         userId: req.userId as string,
-    //       },
-    //     });
-    //   })
-    // );
-
-    await prisma.post.update({
-      where: { id: newPost.id },
-      data: { medias: params.images.join(",") },
-    });
-
     res.json({ success: true, newPost });
-  }
-});
-
-router.post("/verify-token", async (req, res) => {
-  try {
-    const { token } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ error: "Token is required" });
-    }
-
-    const decodedToken = await auth.verifyIdToken(token);
-    res.json({ uid: decodedToken.uid, email: decodedToken.email });
-  } catch (error) {
-    console.error("Error verifying token:", error);
-    res.status(401).json({ error: "Invalid token" });
   }
 });
 
@@ -277,7 +262,7 @@ router.get("/posts", authenticate, async (req, res) => {
       }
 
       const urls = await Promise.all(mediaPromises);
-      post.medias = urls.filter((url) => !!url);
+      post.medias = urls.filter((url) => url);
       postsWithMedia.push(post);
     }
   }

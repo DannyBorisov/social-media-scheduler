@@ -2,11 +2,13 @@ import React, { useMemo, useState } from 'react';
 import Editor from './Editor';
 import { useCreatePost } from '../contexts/CreatePostContext';
 import { cloudStorage } from '../lib/firebase';
-import { Channels } from '../lib/channels';
+
 import apiClient from '../api/client';
 import { useUser } from '../contexts/UserContext';
 import toast from 'react-hot-toast';
 import Avatar from 'react-avatar';
+import { Channel } from '../lib/channels';
+import { useGetPosts } from '../api/post';
 
 interface Props {
   channel: string;
@@ -14,21 +16,17 @@ interface Props {
 
 const CreatePost: React.FC<Props> = ({ channel }) => {
   const createPost = useCreatePost();
+  const posts = useGetPosts();
+
   const [currentPage, setCurrentPage] = useState<string>('');
   const { user } = useUser();
 
   const channels = useMemo(() => {
     const availableChannels = [];
     if (user?.facebook) {
-      availableChannels.push(Channels.facebook);
-    }
-    if (user?.linkedin) {
-      availableChannels.push(Channels.linkedin);
+      availableChannels.push(Channel.Facebook);
     }
 
-    if (user?.instagram) {
-      availableChannels.push(Channels.instagram);
-    }
     return availableChannels;
   }, [user]);
 
@@ -43,11 +41,12 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
       }
     }
 
-    if (channel === Channels.facebook) {
+    if (channel === Channel.Facebook) {
       const params = {
         message: createPost.text,
         page: currentPage,
         images: imageURLs,
+        time: '',
       };
 
       if (createPost.scheduleTime) {
@@ -60,23 +59,29 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
       createPost.setText('');
       createPost.setImages([]);
       createPost.setScheduleTime();
+      posts.refetch();
     }
   }
 
   function onPageChange(e: React.FormEvent<HTMLInputElement>) {
-    const page = user.facebookPages.find((p) => p.id === e.currentTarget.id);
+    const page = user!.facebook?.pages.find((p) => p.id === e.currentTarget.id);
+
+    if (!page) {
+      return;
+    }
+
     setCurrentPage(page);
   }
 
   let DynamicComponent;
-  if (channel === Channels.facebook) {
-    const hasPages = user.facebookPages.length > 0;
+  if (channel === Channel.Facebook) {
+    const hasPages = user?.facebook?.pages?.length;
     if (hasPages) {
       DynamicComponent = (
         <div>
           <h3>Connected Facebook Pages:</h3>
           <ul>
-            {user.facebookPages.map((page) => (
+            {user.facebookIntegration?.pages?.map((page) => (
               <li key={page.id}>
                 <img src={page.picture} alt={page.name} width={20} height={20} />
                 <input onChange={onPageChange} type="radio" name="pages" id={page.id} />

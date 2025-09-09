@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -17,22 +17,28 @@ enum Channel {
 }
 
 model User {
-  id        String   @id // Firebase UID
-  email     String   @unique
+  id        String               @id // Firebase UID
+  email     String               @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Social Media Channels - if present, they are connected
-  facebook  String? // Facebook access token or user ID
-  instagram String? // Instagram access token or user ID  
-  linkedin  String? // LinkedIn access token or user ID
+  facebook  FacebookIntegration?
   Post      Post[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 
   @@map("users")
 }
 
+model FacebookIntegration {
+  id          String   @id
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  accessToken String
+  pages       String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
+  @@map("facebook_integrations")
+}
 
 model Post {
   id           String    @id
@@ -43,7 +49,7 @@ model Post {
   userId       String
   user         User      @relation(fields: [userId], references: [id])
   scheduleTime DateTime?
-  medias       String?
+  medias       String[]?
   channel      Channel
 
   @@map("posts")

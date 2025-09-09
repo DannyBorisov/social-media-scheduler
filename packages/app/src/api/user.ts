@@ -1,21 +1,17 @@
 import { useMutation } from '@tanstack/react-query';
 import apiClient from './client';
 
+export interface FacebookIntegration {
+  pages: string[];
+}
+
 export interface User {
   id: string;
   email: string;
   name?: string | null;
+  facebook: FacebookIntegration | null;
   createdAt: string;
   updatedAt: string;
-  facebook?: string | null;
-  instagram?: string | null;
-  linkedin?: string | null;
-  facebookPages: { id: string; name: string; picture: string }[];
-  connectedChannels: {
-    facebook: boolean;
-    instagram: boolean;
-    linkedin: boolean;
-  };
 }
 
 export interface CreateUserRequest {

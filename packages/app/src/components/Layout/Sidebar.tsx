@@ -1,7 +1,7 @@
 import apiClient from '../../api/client';
 import { useCreatePost } from '../../contexts/CreatePostContext';
 import { useUser } from '../../contexts/UserContext';
-import { Channels } from '../../lib/channels';
+import { Channel } from '../../lib/channels';
 import styles from './Sidebar.module.css';
 import { FaFacebook } from 'react-icons/fa';
 
@@ -12,11 +12,22 @@ const Sidebar: React.FC = () => {
     return null;
   }
 
+  const isConnected = {
+    [Channel.Facebook]: !!user.facebook,
+    [Channel.Instagram]: false,
+    [Channel.LinkedIn]: false,
+    [Channel.Tiktok]: false,
+  };
+
   return (
     <aside className={styles.sidebar}>
       <div className={styles.channelsGrid}>
-        {Object.keys(Channels).map((channel) => (
-          <ChannelCard key={channel} channel={channel} isConnected={!!user[channel]} />
+        {Object.values(Channel).map((channel) => (
+          <ChannelCard
+            key={channel}
+            channel={channel}
+            isConnected={isConnected[channel as Channel]}
+          />
         ))}
       </div>
     </aside>
@@ -37,14 +48,20 @@ const ChannelCard: React.FC<{
 
   async function onClick() {
     if (props.isConnected) {
-      if (props.channel === Channels.facebook) {
+      if (props.channel === Channel.Facebook) {
+        if (user?.facebook?.pages) {
+          setChannel('facebook');
+          setModalOpen(true);
+          return;
+        }
         const { data: pages } = await apiClient.get('/facebook/pages');
-        setUser({ ...user, facebookPages: pages });
+        setUser({ ...user, facebook: { pages } });
         setChannel('facebook');
         setModalOpen(true);
       }
     } else {
-      const { url } = await apiClient.get(`/channel/auth/${props.channel}`);
+      const name = props.channel.toLowerCase();
+      const { url } = await apiClient.get(`/channel/auth/${name}`);
       window.location.href = url;
     }
   }

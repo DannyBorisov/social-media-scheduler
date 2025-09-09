@@ -11,8 +11,8 @@ const CreatePostContext = createContext({
   setProvider: (_: Provider) => {},
   images: [] as File[],
   setImages: (_: File[]) => {},
-  scheduleTime: null as Date | null,
-  setScheduleTime: (_: Date) => {},
+  scheduleTime: undefined as Date | undefined,
+  setScheduleTime: (_?: Date | undefined) => {},
   isModalOpen: false,
   setModalOpen: (_: boolean) => {},
   channel: undefined as string | undefined,
@@ -23,7 +23,7 @@ const CreatePostProvider = ({ children }: { children: React.ReactNode }) => {
   const [provider, setProvider] = useState<Provider>();
   const [text, setText] = useState('');
   const [images, setImages] = useState<File[]>([]);
-  const [scheduleTime, setScheduleTime] = useState<Date | null>(null);
+  const [scheduleTime, setScheduleTime] = useState<Date | undefined>();
   const [isModalOpen, setModalOpen] = useState(false);
   const [channel, setChannel] = useState('');
 

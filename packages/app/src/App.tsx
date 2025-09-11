@@ -1,3 +1,4 @@
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Calendar from './components/Calendar';
 import CreatePost from './components/CreatePost';
@@ -16,6 +17,7 @@ function App() {
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
         <CreatePost channel={channel!} />
       </Modal>
+      <Toaster />
     </>
   );
 }

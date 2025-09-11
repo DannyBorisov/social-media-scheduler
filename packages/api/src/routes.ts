@@ -3,6 +3,12 @@ import { auth, storage } from "./firebase";
 import { prisma } from "./lib/prisma";
 import { Channel } from "@prisma/client";
 import crypto, { randomUUID } from "crypto";
+import {
+  facebookApi,
+  FacebookAPI,
+  FacebookScope,
+  InstagramScope,
+} from "./plugins/facebook";
 
 declare global {
   namespace Express {
@@ -37,11 +43,12 @@ const authenticate = async (
 enum Provider {
   Facebook = "facebook",
   Tiktok = "tiktok",
+  Instagram = "instagram",
 }
 
 const router = express.Router();
 
-router.get("/health", (req, res) => {
+router.get("/health", (_req, res) => {
   res.json({ status: "ok", message: "API is running" });
 });
 
@@ -73,14 +80,11 @@ router.post("/user", async (req, res) => {
 router.get("/channel/auth/:provider", authenticate, async (req, res) => {
   const { provider } = req.params as { provider: Provider };
   if (provider === Provider.Facebook) {
-    const queryParams = new URLSearchParams({
-      client_id: process.env.FACEBOOK_APP_ID as string,
-      redirect_uri: process.env.FACEBOOK_REDIRECT_URI as string,
-      scope:
-        "pages_show_list,pages_read_engagement,pages_manage_posts,pages_read_user_content,pages_manage_metadata,pages_manage_engagement",
-      response_type: "code",
-    });
-    const authURL = `https://www.facebook.com/v23.0/dialog/oauth?${queryParams.toString()}`;
+    const authURL = await facebookApi.getAuthUrl(FacebookScope);
+    res.json({ url: authURL });
+  }
+  if (provider === Provider.Instagram) {
+    const authURL = await facebookApi.getAuthUrl(InstagramScope);
     res.json({ url: authURL });
   }
 
@@ -110,94 +114,14 @@ router.get(
     const { code } = req.query as { code: string };
 
     if (provider === Provider.Facebook) {
-      const queryParams = new URLSearchParams({
-        client_id: process.env.FACEBOOK_APP_ID as string,
-        client_secret: process.env.FACEBOOK_APP_SECRET as string,
-        redirect_uri: process.env.FACEBOOK_REDIRECT_URI as string,
+      const result = await facebookApi.handleCallback(
         code,
-      }).toString();
-
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/oauth/access_token?${queryParams}`
+        req.userId as string
       );
-      const data = await response.json();
-      const url = `https://graph.facebook.com/v23.0/me/accounts?access_token=${data.access_token}`;
-      const pagesResponse = await fetch(url);
-      const pagesData = await pagesResponse.json();
-
-      for (const page of pagesData.data) {
-        const picture = await fetch(
-          `https://graph.facebook.com/v23.0/${page.id}/picture?redirect=false`
-        );
-        const pictureData = await picture.json();
-        page.picture = pictureData.data.url;
-      }
-
-      if (data.access_token) {
-        await prisma.facebookIntegration.upsert({
-          where: { userId: req.userId as string },
-          update: {
-            accessToken: data.access_token,
-            pages: pagesData.data.map((page: any) =>
-              JSON.stringify({
-                id: page.id,
-                name: page.name,
-                access_token: page.access_token,
-                picture: page.picture,
-              })
-            ),
-          },
-          create: {
-            id: randomUUID(),
-            userId: req.userId as string,
-            accessToken: data.access_token,
-            pages: pagesData.data.map((page: any) =>
-              JSON.stringify({
-                id: page.id,
-                name: page.name,
-                access_token: page.access_token,
-                picture: page.picture,
-              })
-            ),
-          },
-        });
-        res.json({ success: true });
-      }
+      res.json(result);
     }
   }
 );
-
-router.get("/facebook/pages", authenticate, async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.userId },
-    include: { facebook: true },
-  });
-
-  if (!user || !user.facebook) {
-    return res
-      .status(400)
-      .json({ error: "User not found or Facebook not connected" });
-  }
-  const response = await fetch(
-    `https://graph.facebook.com/v23.0/me/accounts?access_token=${user.facebook}`
-  );
-  const data = await response.json();
-
-  for (const page of data.data) {
-    const picture = await fetch(
-      `https://graph.facebook.com/v23.0/${page.id}/picture?redirect=false`
-    );
-    const pictureData = await picture.json();
-    page.picture = pictureData.data.url;
-  }
-
-  await prisma.facebookIntegration.update({
-    where: { userId: req.userId },
-    data: { pages: data.data },
-  });
-
-  res.json(data);
-});
 
 router.post("/channel/:provider/post", authenticate, async (req, res) => {
   const { provider } = req.params as { provider: Provider };
@@ -212,66 +136,25 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
   }
 
   if (provider === Provider.Facebook) {
-    if (!user.facebook) {
-      return res
-        .status(400)
-        .json({ error: "Facebook not connected for this user" });
+    try {
+      const data = await facebookApi.createPost(params, req.userId!);
+
+      const newPost = await prisma.post.create({
+        data: {
+          id: randomUUID(),
+          userId: req.userId!,
+          channelId: data.id,
+          channel: Channel.FACEBOOK,
+          text: params.message,
+          scheduleTime: params.time ? new Date(params.time) : new Date(),
+          medias: params.images,
+        },
+      });
+
+      res.json({ success: true, newPost });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
-
-    const postPayload = {
-      message: params.message,
-      access_token: params.page.access_token,
-      published: !params.time,
-      scheduled_publish_time: "",
-    };
-
-    if (params.time) {
-      const scheduledDate = new Date(params.time);
-      const toTime = scheduledDate.getTime();
-      postPayload.scheduled_publish_time = Math.floor(toTime / 1000);
-    }
-
-    if (params.images) {
-      const ids = [];
-
-      for (const imageUrl of params.images) {
-        const url = `https://graph.facebook.com/v23.0/${params.page.id}/photos`;
-        const payload = {
-          access_token: params.page.access_token,
-          url: imageUrl,
-          published: "false",
-          temporary: "true",
-        };
-        const response = await fetch(
-          `${url}?${new URLSearchParams(payload).toString()}`,
-          { method: "POST" }
-        );
-        const data = await response.json();
-        ids.push(data.id);
-        postPayload.attached_media = JSON.stringify(
-          ids.map((id: string) => ({ media_fbid: id }))
-        );
-      }
-    }
-
-    const url = `https://graph.facebook.com/v23.0/${params.page.id}/feed`;
-    const query = new URLSearchParams(postPayload).toString();
-    const response = await fetch(`${url}?${query}`, { method: "POST" });
-    const data = await response.json();
-
-    const newPost = await prisma.post.create({
-      data: {
-        id: randomUUID(),
-        userId: req.userId!,
-        channelId: data.id,
-        channel: Channel.FACEBOOK,
-        text: params.message,
-        scheduleTime: params.time ? new Date(params.time) : new Date(),
-        medias: params.images,
-      },
-    });
-
-    res.json({ success: true, newPost });
   }
 });
 

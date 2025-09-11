@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
 
   const isConnected = {
     [Channel.Facebook]: !!user.facebook,
-    [Channel.Instagram]: false,
+    [Channel.Instagram]: !!user.facebook?.scope?.includes('instagram_business_basic'),
     [Channel.LinkedIn]: false,
     [Channel.Tiktok]: false,
   };

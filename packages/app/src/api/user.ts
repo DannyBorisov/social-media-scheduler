@@ -3,6 +3,12 @@ import apiClient from './client';
 
 export interface FacebookIntegration {
   pages: string[];
+  scope: string[];
+}
+
+export interface InstagramIntegration {
+  id: string;
+  username: string;
 }
 
 export interface User {

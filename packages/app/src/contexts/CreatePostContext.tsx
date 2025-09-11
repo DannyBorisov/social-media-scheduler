@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react';
+import { Channel } from '../lib/channels';
 
 enum Provider {
   Facebook = 'facebook',
@@ -25,7 +26,7 @@ const CreatePostProvider = ({ children }: { children: React.ReactNode }) => {
   const [images, setImages] = useState<File[]>([]);
   const [scheduleTime, setScheduleTime] = useState<Date | undefined>();
   const [isModalOpen, setModalOpen] = useState(false);
-  const [channel, setChannel] = useState('');
+  const [channel, setChannel] = useState<Channel>();
 
   return (
     <CreatePostContext.Provider

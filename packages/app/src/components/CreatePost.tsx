@@ -7,6 +7,7 @@ import { useUser } from '../contexts/UserContext';
 import toast from 'react-hot-toast';
 import { Channel } from '../lib/channels';
 import { useGetPosts } from '../api/post';
+import styles from './CreatePost.module.css';
 
 interface Props {
   channel: Channel;
@@ -43,22 +44,20 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
       }
 
       await apiClient.post('/channel/facebook/post', { params });
-      toast.success('Post created successfully!');
+      await posts.refetch();
       createPost.setModalOpen(false);
       createPost.setText('');
       createPost.setImages([]);
       createPost.setScheduleTime();
-      posts.refetch();
+      toast.success('Post created successfully!');
     }
   }
 
   function onPageChange(e: React.FormEvent<HTMLInputElement>) {
     const page = user!.facebook?.pages.find((p) => p.id === e.currentTarget.id);
-
     if (!page) {
       return;
     }
-
     setCurrentPage(page);
   }
 
@@ -68,27 +67,53 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
 
     if (hasPages) {
       DynamicComponent = (
-        <div>
-          <h3>Connected Facebook Pages:</h3>
-          <ul>
+        <div className={styles.pagesSection}>
+          <h3 className={styles.pagesTitle}>
+            <div className={styles.facebookIcon}>f</div>
+            Select Facebook Page
+          </h3>
+          <ul className={styles.pagesGrid}>
             {user.facebook?.pages?.map((page: any) => (
-              <li key={page.id}>
-                <img src={page.picture} alt={page.name} width={20} height={20} />
-                <input onChange={onPageChange} type="radio" name="pages" id={page.id} />
-                <label htmlFor={page.id}>{page.name}</label>
+              <li
+                key={page.id}
+                className={`${styles.pageCard} ${currentPage === page ? styles.selected : ''}`}
+                onClick={() => setCurrentPage(page)}
+              >
+                <img src={page.picture} alt={page.name} className={styles.pageAvatar} />
+                <div className={styles.pageInfo}>
+                  <p className={styles.pageName}>{page.name}</p>
+                </div>
+                <input
+                  onChange={onPageChange}
+                  type="radio"
+                  name="pages"
+                  id={page.id}
+                  className={styles.hiddenRadio}
+                  checked={currentPage === page}
+                  readOnly
+                />
               </li>
             ))}
           </ul>
         </div>
       );
     } else {
-      DynamicComponent = <div>No pages yet</div>;
+      DynamicComponent = (
+        <div className={styles.pagesSection}>
+          <div className={styles.noPages}>
+            <div className={styles.facebookIcon} style={{ margin: '0 auto 0.5rem' }}>
+              f
+            </div>
+            <p>No Facebook pages connected yet</p>
+          </div>
+        </div>
+      );
     }
   } else {
     DynamicComponent = <div></div>;
   }
   return (
-    <div>
+    <div className={styles.container}>
       {DynamicComponent}
       <Editor onSubmit={onSubmit} />
     </div>

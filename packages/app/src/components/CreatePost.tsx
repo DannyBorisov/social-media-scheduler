@@ -1,17 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import Editor from './Editor';
 import { useCreatePost } from '../contexts/CreatePostContext';
 import { cloudStorage } from '../lib/firebase';
-
 import apiClient from '../api/client';
 import { useUser } from '../contexts/UserContext';
 import toast from 'react-hot-toast';
-import Avatar from 'react-avatar';
 import { Channel } from '../lib/channels';
 import { useGetPosts } from '../api/post';
 
 interface Props {
-  channel: string;
+  channel: Channel;
 }
 
 const CreatePost: React.FC<Props> = ({ channel }) => {
@@ -20,15 +18,6 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
 
   const [currentPage, setCurrentPage] = useState<string>('');
   const { user } = useUser();
-
-  const channels = useMemo(() => {
-    const availableChannels = [];
-    if (user?.facebook) {
-      availableChannels.push(Channel.Facebook);
-    }
-
-    return availableChannels;
-  }, [user]);
 
   async function onSubmit() {
     const imageURLs: string[] = [];
@@ -50,7 +39,7 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
       };
 
       if (createPost.scheduleTime) {
-        params['time'] = createPost.scheduleTime.toISOString();
+        params.time = createPost.scheduleTime.toISOString();
       }
 
       await apiClient.post('/channel/facebook/post', { params });
@@ -75,13 +64,14 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
 
   let DynamicComponent;
   if (channel === Channel.Facebook) {
-    const hasPages = user?.facebook?.pages?.length;
+    const hasPages = !!user?.facebook?.pages?.length;
+
     if (hasPages) {
       DynamicComponent = (
         <div>
           <h3>Connected Facebook Pages:</h3>
           <ul>
-            {user.facebookIntegration?.pages?.map((page) => (
+            {user.facebook?.pages?.map((page: any) => (
               <li key={page.id}>
                 <img src={page.picture} alt={page.name} width={20} height={20} />
                 <input onChange={onPageChange} type="radio" name="pages" id={page.id} />
@@ -95,13 +85,7 @@ const CreatePost: React.FC<Props> = ({ channel }) => {
       DynamicComponent = <div>No pages yet</div>;
     }
   } else {
-    DynamicComponent = (
-      <div>
-        {channels.map((c) => (
-          <Avatar round size="30" />
-        ))}
-      </div>
-    );
+    DynamicComponent = <div></div>;
   }
   return (
     <div>

@@ -40,7 +40,6 @@ const ChannelCard: React.FC<{
   channel: string;
   isConnected: boolean;
 }> = (props) => {
-  const { setUser, user } = useUser();
   const { setModalOpen, setChannel } = useCreatePost();
   const getChannelName = (channel: string) => {
     return channel.at(0)!.toUpperCase() + channel.slice(1);
@@ -49,15 +48,9 @@ const ChannelCard: React.FC<{
   async function onClick() {
     if (props.isConnected) {
       if (props.channel === Channel.Facebook) {
-        if (user?.facebook?.pages) {
-          setChannel('facebook');
-          setModalOpen(true);
-          return;
-        }
-        const { data: pages } = await apiClient.get('/facebook/pages');
-        setUser({ ...user, facebook: { pages } });
-        setChannel('facebook');
+        setChannel(Channel.Facebook);
         setModalOpen(true);
+        return;
       }
     } else {
       const name = props.channel.toLowerCase();

@@ -25,9 +25,7 @@ export interface CreateUserRequest {
 
 export const useCreateUser = () => {
   return useMutation({
-    mutationFn: async (userData: CreateUserRequest): Promise<User> => {
-      return await apiClient.post('/user', userData);
-    },
+    mutationFn: async (userData: CreateUserRequest) => await apiClient.post('/user', userData),
     onError: (error) => {
       console.error('Error creating user:', error);
     },

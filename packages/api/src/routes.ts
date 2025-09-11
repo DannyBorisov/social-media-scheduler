@@ -51,6 +51,16 @@ router.get("/user/:id", async (req, res) => {
     where: { id },
     include: { facebook: true },
   });
+
+  if (!user) {
+    return;
+  }
+
+  if (user.facebook && user.facebook.pages) {
+    const pages = user.facebook.pages.map((pageStr) => JSON.parse(pageStr));
+    user.facebook = { ...user.facebook, pages };
+  }
+
   res.json(user);
 });
 
@@ -106,18 +116,49 @@ router.get(
         redirect_uri: process.env.FACEBOOK_REDIRECT_URI as string,
         code,
       }).toString();
+
       const response = await fetch(
-        `https://graph.facebook.com/v23.0/oauth/access_token?${queryParams}`,
-        { method: "GET" }
+        `https://graph.facebook.com/v23.0/oauth/access_token?${queryParams}`
       );
       const data = await response.json();
+      const url = `https://graph.facebook.com/v23.0/me/accounts?access_token=${data.access_token}`;
+      const pagesResponse = await fetch(url);
+      const pagesData = await pagesResponse.json();
+
+      for (const page of pagesData.data) {
+        const picture = await fetch(
+          `https://graph.facebook.com/v23.0/${page.id}/picture?redirect=false`
+        );
+        const pictureData = await picture.json();
+        page.picture = pictureData.data.url;
+      }
+
       if (data.access_token) {
-        await prisma.facebookIntegration.create({
-          data: {
+        await prisma.facebookIntegration.upsert({
+          where: { userId: req.userId as string },
+          update: {
+            accessToken: data.access_token,
+            pages: pagesData.data.map((page: any) =>
+              JSON.stringify({
+                id: page.id,
+                name: page.name,
+                access_token: page.access_token,
+                picture: page.picture,
+              })
+            ),
+          },
+          create: {
             id: randomUUID(),
             userId: req.userId as string,
             accessToken: data.access_token,
-            pages: [],
+            pages: pagesData.data.map((page: any) =>
+              JSON.stringify({
+                id: page.id,
+                name: page.name,
+                access_token: page.access_token,
+                picture: page.picture,
+              })
+            ),
           },
         });
         res.json({ success: true });
@@ -181,6 +222,7 @@ router.post("/channel/:provider/post", authenticate, async (req, res) => {
       message: params.message,
       access_token: params.page.access_token,
       published: !params.time,
+      scheduled_publish_time: "",
     };
 
     if (params.time) {
@@ -241,16 +283,15 @@ router.get("/posts", authenticate, async (req, res) => {
   const postsWithMedia = [];
   for (const post of posts) {
     if (post.medias) {
-      const mediaGcsPaths = post.medias.split(",");
+      const mediaGcsPaths = post.medias;
       const mediaPromises = [];
       for (const gcsPath of mediaGcsPaths) {
-        console.log({ gcsPath });
         const promise = storage
           .bucket(process.env.MEDIA_BUCKET_NAME)
           .file(gcsPath, {})
           .getSignedUrl({
             action: "read",
-            expires: Date.now() + 60 * 60 * 1000, // 1 hour
+            expires: Date.now() + 60 * 60 * 1000,
           })
           .then(([url]) => url)
 

@@ -7,10 +7,12 @@ const UserContext = createContext<{
   user: User | null;
   setUser: (uuser: User) => void;
   logout: () => void;
+  refetchUser: () => void;
 }>({
   user: null,
   setUser: () => {},
   logout: () => {},
+  refetchUser: () => {},
 });
 
 function UserProvider({ children }: { children: React.ReactNode }) {
@@ -41,7 +43,11 @@ function UserProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  return <UserContext.Provider value={{ user, setUser, logout }}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ user, setUser, logout, refetchUser: getUser.mutate }}>
+      {children}
+    </UserContext.Provider>
+  );
 }
 
 const useUser = () => useContext(UserContext);

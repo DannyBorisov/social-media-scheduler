@@ -52,6 +52,10 @@ const ChannelCard: React.FC<{
         setModalOpen(true);
         return;
       }
+
+      if (props.channel === Channel.Instagram) {
+        setChannel(Channel.Instagram);
+      }
     } else {
       const name = props.channel.toLowerCase();
       const { url } = await apiClient.get(`/channel/auth/${name}`);
